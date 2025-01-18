@@ -8,6 +8,7 @@ import (
 	"math"
 	"os"
 	"sort"
+	"time"
 
 	blocks "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
@@ -65,7 +66,9 @@ type ProtoNode struct {
 	cached  cid.Cid
 
 	// builder specifies cid version and hashing function
-	builder cid.Builder
+	builder    cid.Builder
+	timeappend time.Duration
+	timeproto  time.Duration
 }
 
 var v0CidPrefix = cid.Prefix{
@@ -170,7 +173,7 @@ func NodeWithData(d []byte) *ProtoNode {
 // RemoveNodeLink for the same link, will not result in an identically encoded
 // form as the links will have been sorted.
 func (n *ProtoNode) AddNodeLink(name string, that format.Node) error {
-	fmt.Fprintf(os.Stdout, "LLLLLLLLLLLLLLOOOOOOOOOOOOOOOOOOLLLLLLLLLLLLLLLLLLLLLLLLLLLLL \n")
+
 	lnk, err := format.MakeLink(that)
 	if err != nil {
 		return err
@@ -344,15 +347,23 @@ func (n *ProtoNode) UpdateNodeLink(name string, that *ProtoNode) (*ProtoNode, er
 // Size returns the total size of the data addressed by node,
 // including the total sizes of references.
 func (n *ProtoNode) Size() (uint64, error) {
+	st := time.Now()
 	b, err := n.EncodeProtobuf(false)
 	if err != nil {
 		return 0, err
 	}
 
+	en := time.Now()
+	fmt.Fprintf(os.Stdout, "LLLLLLLLLLLLLLOOOOOOOOOOOOOOOOOOLLLLLLLLLLLLLLLLLLLLLLLLLLLLL protoooo became : %s \n", n.timeproto.String())
+	n.timeproto += en.Sub(st)
+	st = time.Now()
 	s := uint64(len(b))
 	for _, l := range n.links {
 		s += l.Size
 	}
+	en = time.Now()
+	n.timeappend += en.Sub(st)
+	fmt.Fprintf(os.Stdout, "LLLLLLLLLLLLLLOOOOOOOOOOOOOOOOOOLLLLLLLLLLLLLLLLLLLLLLLLLLLLL appendddd became : %s \n", n.timeappend.String())
 	return s, nil
 }
 
