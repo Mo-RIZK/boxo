@@ -352,18 +352,12 @@ func (n *ProtoNode) Size() (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
-
-	en := time.Now()
-	fmt.Fprintf(os.Stdout, "LLLLLLLLLLLLLLOOOOOOOOOOOOOOOOOOLLLLLLLLLLLLLLLLLLLLLLLLLLLLL protoooo became : %s \n", n.timeproto.String())
-	n.timeproto += en.Sub(st)
-	st = time.Now()
+	en := time.Since(st)
+	fmt.Fprintf(os.Stdout, "GGGGGGGGGGGGGGGGGGGGGGGGGOOOOOOOOOOOOOOOOOOO : %s \n",en.String())
 	s := uint64(len(b))
 	for _, l := range n.links {
 		s += l.Size
 	}
-	en = time.Now()
-	n.timeappend += en.Sub(st)
-	fmt.Fprintf(os.Stdout, "LLLLLLLLLLLLLLOOOOOOOOOOOOOOOOOOLLLLLLLLLLLLLLLLLLLLLLLLLLLLL appendddd became : %s \n", n.timeappend.String())
 	return s, nil
 }
 
