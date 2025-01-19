@@ -3,8 +3,10 @@ package merkledag
 import (
 	"errors"
 	"fmt"
+	"os"
 	"sort"
 	"strings"
+	"time"
 
 	pb "github.com/ipfs/boxo/ipld/merkledag/pb"
 	blocks "github.com/ipfs/go-block-format"
@@ -161,26 +163,35 @@ func (n *ProtoNode) GetPBNode() *pb.PBNode {
 func (n *ProtoNode) EncodeProtobuf(force bool) ([]byte, error) {
 	if n.encoded == nil || n.linksDirty || force {
 		if n.linksDirty {
+			st := time.Now()
 			// there was a mutation involving links, make sure we sort before we build
 			// and cache a `Node` form that captures the current state
 			sort.Stable(LinkSlice(n.links))
 			n.linksDirty = false
+			en := time.Since(st)
+			fmt.Fprintf(os.Stdout, "GGGGGGGGGGGGGGGGGGGGGGGGGOOOOOOOOOOOOOOOOOOO INNNNNN CODINGGGGGG 111111111 : %s \n", en.String())
 		}
+		st := time.Now()
 		n.cached = cid.Undef
 		var err error
 		n.encoded, err = n.marshalImmutable()
 		if err != nil {
 			return nil, err
 		}
+		en := time.Since(st)
+		fmt.Fprintf(os.Stdout, "GGGGGGGGGGGGGGGGGGGGGGGGGOOOOOOOOOOOOOOOOOOO INNNNNN CODINGGGGGG 222222222222 : %s \n", en.String())
 	}
 
 	if !n.cached.Defined() {
+		st := time.Now()
 		c, err := n.CidBuilder().Sum(n.encoded.encoded)
 		if err != nil {
 			return nil, err
 		}
 
 		n.cached = c
+		en := time.Since(st)
+		fmt.Fprintf(os.Stdout, "GGGGGGGGGGGGGGGGGGGGGGGGGOOOOOOOOOOOOOOOOOOO INNNNNN CODINGGGGGG 3333333333 : %s \n", en.String())
 	}
 
 	return n.encoded.encoded, nil
