@@ -3,6 +3,7 @@ package merkledag
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 
 	u "github.com/ipfs/boxo/util"
 	blocks "github.com/ipfs/go-block-format"
@@ -96,6 +97,7 @@ func (rn *RawNode) Copy() format.Node {
 
 // Size returns the size of this node
 func (rn *RawNode) Size() (uint64, error) {
+	fmt.Fprintf(os.Stdout, "GGGGGGGGGGGGGGGGGGGGGGGGG : %s \n")
 	return uint64(len(rn.RawData())), nil
 }
 
