@@ -1,4 +1,4 @@
-module github.com/ipfs/boxo
+module github.com/Mo-RIZK/boxo
 
 go 1.23
 
