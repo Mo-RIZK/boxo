@@ -579,6 +579,7 @@ func (dr *dagReader) WriteNOriginal(w io.Writer) (err error) {
 								if written+int64(len(shard)) < int64(dr.size) {
 									//writeondisk = append(writeondisk, shard...)
 									dr.currentNodeData = bytes.NewReader(shard)
+									fmt.Fprintf(os.Stdout, "READ from NETWORK and WRITE to BUFFER then PIPE : %s \n",time.Now().Format("2006-01-02 15:04:05.000"))
 									writtenn, _ := dr.writeNodeDataBuffer(w)
 									written += int64(writtenn)
 								} else {
