@@ -4,13 +4,16 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"os"
+	"sync"
 	"time"
 
 	mdag "github.com/ipfs/boxo/ipld/merkledag"
 	unixfs "github.com/ipfs/boxo/ipld/unixfs"
 	ipld "github.com/ipfs/go-ipld-format"
+	"github.com/klauspost/reedsolomon"
 )
 
 // Common errors
@@ -106,6 +109,80 @@ func NewDagReader(ctx context.Context, n ipld.Node, serv ipld.NodeGetter) (DagRe
 		modTime:   modTime,
 		rootNode:  n,
 		dagWalker: ipld.NewWalker(ctxWithCancel, ipld.NewNavigableIPLDNode(n, serv)),
+		or:        0,
+		par:       0,
+		chunksize: 0,
+	}, nil
+}
+
+// NewDagReader creates a new reader object that reads the data represented by
+// the given node, using the passed in DAGService for data retrieval.
+func NewDagReaderEC(ctx context.Context, n ipld.Node, serv ipld.NodeGetter, or int, par int, chunksize uint64, mechanism string) (DagReader, error) {
+	var size uint64
+	var mode os.FileMode
+	var modTime time.Time
+
+	switch n := n.(type) {
+	case *mdag.RawNode:
+		size = uint64(len(n.RawData()))
+
+	case *mdag.ProtoNode:
+		fsNode, err := unixfs.FSNodeFromBytes(n.Data())
+		if err != nil {
+			return nil, err
+		}
+
+		mode = fsNode.Mode()
+		modTime = fsNode.ModTime()
+
+		switch fsNode.Type() {
+		case unixfs.TFile, unixfs.TRaw:
+			size = fsNode.FileSize()
+
+		case unixfs.TDirectory, unixfs.THAMTShard:
+			// Dont allow reading directories
+			return nil, ErrIsDir
+
+		case unixfs.TMetadata:
+			if len(n.Links()) == 0 {
+				return nil, errors.New("incorrectly formatted metadata object")
+			}
+			child, err := n.Links()[0].GetNode(ctx, serv)
+			if err != nil {
+				return nil, err
+			}
+
+			childpb, ok := child.(*mdag.ProtoNode)
+			if !ok {
+				return nil, mdag.ErrNotProtobuf
+			}
+			return NewDagReader(ctx, childpb, serv)
+		case unixfs.TSymlink:
+			return nil, ErrCantReadSymlinks
+		default:
+			return nil, unixfs.ErrUnrecognizedType
+		}
+	default:
+		return nil, ErrUnkownNodeType
+	}
+
+	ctxWithCancel, cancel := context.WithCancel(ctx)
+
+	return &dagReader{
+		ctx:              ctxWithCancel,
+		cancel:           cancel,
+		serv:             serv,
+		size:             size,
+		mode:             mode,
+		modTime:          modTime,
+		rootNode:         n,
+		dagWalker:        ipld.NewWalker(ctxWithCancel, ipld.NewNavigableIPLDNode(n, serv)),
+		or:               or,
+		par:              par,
+		chunksize:        chunksize,
+		mechanism:        mechanism,
+		nodesToExtr:      make([]ipld.Node, 0),
+		recnostructtimes: 0,
 	}, nil
 }
 
@@ -140,9 +217,24 @@ type dagReader struct {
 
 	// Passed to the `dagWalker` that will use it to request nodes.
 	// TODO: Revisit name.
-	serv    ipld.NodeGetter
-	mode    os.FileMode
-	modTime time.Time
+	serv             ipld.NodeGetter
+	mode             os.FileMode
+	modTime          time.Time
+	EC               bool
+	or               int
+	par              int
+	chunksize        uint64
+	mechanism        string
+	nodesToExtr      []ipld.Node
+	mu               sync.Mutex
+	wg               sync.WaitGroup
+	recnostructtimes int
+	timetakenDecode  time.Duration
+	verificationTime time.Duration
+}
+type linkswithindexes struct {
+	Link  *ipld.Link
+	Index int
 }
 
 // Mode returns the UnixFS file mode or 0 if not set.
@@ -233,6 +325,11 @@ func (dr *dagReader) CtxReadFull(ctx context.Context, out []byte) (n int, err er
 	return n, nil
 }
 
+type nodeswithindexes struct {
+	Node  ipld.Node
+	Index int
+}
+
 // Save the UnixFS `node`'s data into the internal `currentNodeData` buffer to
 // later move it to the output buffer (`Read`) or seek into it (`Seek`).
 func (dr *dagReader) saveNodeData(node ipld.Node) error {
@@ -286,7 +383,7 @@ func (dr *dagReader) writeNodeDataBuffer(w io.Writer) (int64, error) {
 		// single node's data, not the entire DAG.
 	}
 
-	dr.offset += n
+	dr.offset += int64(n)
 	return n, nil
 }
 
@@ -298,6 +395,14 @@ func (dr *dagReader) writeNodeDataBuffer(w io.Writer) (int64, error) {
 // TODO: This implementation is very similar to `CtxReadFull`,
 // the common parts should be abstracted away.
 func (dr *dagReader) WriteTo(w io.Writer) (n int64, err error) {
+	if dr.or == 0 {
+		return dr.READREP(w)
+	} else {
+		return dr.READEC(w)
+	}
+
+}
+func (dr *dagReader) READREP(w io.Writer) (n int64, err error) {
 	// Use the internal reader's context to fetch the child node promises
 	// (see `ipld.NavigableIPLDNode.FetchChild` for details).
 	dr.dagWalker.SetContext(dr.ctx)
@@ -345,6 +450,255 @@ func (dr *dagReader) WriteTo(w io.Writer) (n int64, err error) {
 	}
 
 	return n, err
+}
+
+func (dr *dagReader) READEC(w io.Writer) (n int64, err error) {
+	// Use the internal reader's context to fetch the child node promises
+	// (see `ipld.NavigableIPLDNode.FetchChild` for details).
+	dr.dagWalker.SetContext(dr.ctx)
+
+	// If there was a partially read buffer from the last visited
+	// node read it before visiting a new one.
+	if dr.currentNodeData != nil {
+		n, err = dr.writeNodeDataBuffer(w)
+		if err != nil {
+			return n, err
+		}
+	}
+
+	// Iterate the DAG calling the passed `Visitor` function on every node
+	// to read its data into the `out` buffer, stop if there is an error or
+	// if the entire DAG is traversed (`EndOfDag`).
+	start := time.Now()
+	err = dr.dagWalker.ECIterate(func(visitedNode ipld.NavigableNode) error {
+		node := ipld.ExtractIPLDNode(visitedNode)
+		dr.nodesToExtr = append(dr.nodesToExtr, node)
+		return nil
+	}, dr.chunksize)
+
+	if err == ipld.EndOfDag {
+		end := time.Now()
+		fmt.Fprintf(os.Stdout, "Time taken to get the internal nodes on the level before the last one : %s \n", end.Sub(start).String())
+		if dr.mechanism == "exactN" {
+			/*dr.WriteN(w)
+			fmt.Fprintf(os.Stdout, "Time taken to reconstruct nodes : %s \n", dr.timetakenDecode.String())
+			fmt.Fprintf(os.Stdout, "Time taken for verification : %s \n", dr.verificationTime.String())
+			*/return 0, nil
+		}
+		if dr.mechanism == "allN" {
+			dr.WriteNPlusK(w)
+			fmt.Fprintf(os.Stdout, "Nb of nodes : %d \n", dr.recnostructtimes)
+			fmt.Fprintf(os.Stdout, "Time taken to reconstruct nodes : %s \n", dr.timetakenDecode.String())
+			fmt.Fprintf(os.Stdout, "Time taken for verification : %s \n", dr.verificationTime.String())
+			return 0, nil
+		}
+		if dr.mechanism == "originalN" {
+			dr.WriteNOriginal(w)
+			//fmt.Fprintf(os.Stdout, "Time taken to reconstruct nodes : %s \n", dr.timetakenDecode.String())
+			//fmt.Fprintf(os.Stdout, "Time taken for verification : %s \n", dr.verificationTime.String())
+			return 0, nil
+		}
+		if dr.mechanism == "originalplus1" {
+			/*dr.WriteNPlsOne(w)
+			fmt.Fprintf(os.Stdout, "Time taken to reconstruct nodes : %s \n", dr.timetakenDecode.String())
+			fmt.Fprintf(os.Stdout, "Time taken for verification : %s \n", dr.verificationTime.String())
+			*/return 0, nil
+		}
+
+	}
+
+	return n, err
+
+}
+
+// //////////////////// Downloading only the original data /////////////////////
+func (dr *dagReader) WriteNOriginal(w io.Writer) (err error) {
+	linksparallel := make([]*ipld.Link, 0)
+	skipped := 0
+	var written int64
+	written = 0
+	for _, n := range dr.nodesToExtr {
+		for _, l := range n.Links() {
+			if len(linksparallel) < dr.or {
+				linksparallel = append(linksparallel, l)
+			} else {
+				if len(linksparallel) == dr.or {
+					skipped++
+					if skipped == dr.par {
+						//open channel with context
+						doneChan := make(chan nodeswithindexes, dr.or)
+						// Create a new context with cancellation for this batch
+						ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+						wrote := 0
+						defer cancel() // Ensure context is cancelled when batch is done
+						//start n+k gourotines and start retrieving parallel nodes
+						worker := func(nodepassed linkswithindexes) {
+							node, _ := nodepassed.Link.GetNode(ctx, dr.serv)
+							dr.mu.Lock()
+							defer dr.mu.Unlock()
+							select {
+							case <-ctx.Done():
+								// Context cancelled, goroutine terminates early
+								if ctx.Err() == context.DeadlineExceeded {
+									fmt.Println("Timeout reached")
+									dr.ctx.Done()
+								}
+								return
+							default:
+								wrote++
+								doneChan <- nodeswithindexes{Node: node, Index: nodepassed.Index}
+								if wrote == dr.or {
+									cancel()
+								}
+								dr.wg.Done()
+							}
+						}
+						dr.wg.Add(dr.or)
+						for i, link := range linksparallel {
+							topass := linkswithindexes{Link: link, Index: i}
+							go worker(topass)
+						}
+
+						//wait
+						dr.wg.Wait()
+
+						//take from done channel
+						close(doneChan)
+						shards := make([][]byte, dr.or+dr.par)
+						for value := range doneChan {
+							// we will compare the indexes and see if they are from 0 to 2 but here we are trying just to write
+							fmt.Fprintf(os.Stdout, "index %d \n", value.Index)
+							size, _ := value.Node.Size()
+							fmt.Printf("Node size in bytes: %d\n", size)
+							// Place the node's raw data into the correct index in shards
+							shards[value.Index], _ = unixfs.ReadUnixFSNodeData(value.Node)
+							//dr.writeNodeDataBuffer(w)
+						}
+						for i, shard := range shards {
+							if i < dr.or {
+								if written+int64(len(shard)) < int64(dr.size) {
+									//writeondisk = append(writeondisk, shard...)
+									dr.currentNodeData = bytes.NewReader(shard)
+									writtenn, _ := dr.writeNodeDataBuffer(w)
+									written += int64(writtenn)
+								} else {
+									towrite := shard[0 : int64(dr.size)-written]
+									dr.currentNodeData = bytes.NewReader(towrite)
+									writtenn, _ := dr.writeNodeDataBuffer(w)
+									written += int64(writtenn)
+									//writeondisk = append(writeondisk, towrite...)
+									//w.Write(writeondisk)
+									//w.Write(towrite)
+									//fmt.Fprintf(os.Stdout, "!!!!!!!!!!!!! takennnnnnn !!!!!!!!!!!!!!!!!! channel %s, writing only : %s \n", dr.timediff.String(), dr.timetakenDecode.String())
+									return nil
+								}
+
+							}
+						}
+						fmt.Fprintf(os.Stdout, "-------------------------------- \n")
+						linksparallel = make([]*ipld.Link, 0)
+						skipped = 0
+					}
+
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+// /////////////// Downloading all chunks and the fastest N chunks we retrieve we will be writing it to disk /////////////////////////
+func (dr *dagReader) WriteNPlusK(w io.Writer) (err error) {
+	linksparallel := make([]*ipld.Link, 0)
+	enc, _ := reedsolomon.New(dr.or, dr.par)
+	var written uint64
+	written = 0
+	for _, n := range dr.nodesToExtr {
+		for _, l := range n.Links() {
+			if len(linksparallel) < dr.or+dr.par {
+				linksparallel = append(linksparallel, l)
+			}
+			if len(linksparallel) == dr.or+dr.par {
+				//open channel with context
+				doneChan := make(chan nodeswithindexes, dr.or)
+				// Create a new context with cancellation for this batch
+				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+				wrote := 0
+				defer cancel() // Ensure context is cancelled when batch is done
+				//start n+k gourotines and start retrieving parallel nodes
+				worker := func(nodepassed linkswithindexes) {
+					node, _ := nodepassed.Link.GetNode(ctx, dr.serv)
+					dr.mu.Lock()
+					defer dr.mu.Unlock()
+					select {
+					case <-ctx.Done():
+						// Context cancelled, goroutine terminates early
+						if ctx.Err() == context.DeadlineExceeded {
+							fmt.Println("Timeout reached")
+							dr.ctx.Done()
+						}
+						return
+					default:
+						wrote++
+						doneChan <- nodeswithindexes{Node: node, Index: nodepassed.Index}
+						if wrote == dr.or {
+							cancel()
+						}
+						dr.wg.Done()
+					}
+				}
+				dr.wg.Add(dr.or)
+				for i, link := range linksparallel {
+					topass := linkswithindexes{Link: link, Index: i}
+					go worker(topass)
+				}
+
+				//wait
+				dr.wg.Wait()
+				//take from done channel
+				close(doneChan)
+				shards := make([][]byte, dr.or+dr.par)
+				reconstruct := 0
+				for value := range doneChan {
+					// we will compare the indexes and see if they are from 0 to 2 but here we are trying just to write
+					fmt.Fprintf(os.Stdout, "index %d \n", value.Index)
+					// Place the node's raw data into the correct index in shards
+					shards[value.Index], _ = unixfs.ReadUnixFSNodeData(value.Node)
+					if value.Index%(dr.or+dr.par) >= dr.or {
+						reconstruct = 1
+					}
+					//dr.writeNodeDataBuffer(w)
+				}
+				if reconstruct == 1 {
+					dr.recnostructtimes++
+					start := time.Now()
+					enc.Reconstruct(shards)
+					end := time.Now()
+					dr.timetakenDecode += end.Sub(start)
+					st := time.Now()
+					enc.Verify(shards)
+					en := time.Now()
+					dr.verificationTime += en.Sub(st)
+				}
+				for i, shard := range shards {
+					if i < dr.or {
+						if written+uint64(len(shard)) < dr.size {
+							w.Write(shard)
+							written += uint64(len(shard))
+						} else {
+							towrite := shard[0 : dr.size-written]
+							w.Write(towrite)
+							return nil
+						}
+					}
+				}
+				fmt.Fprintf(os.Stdout, "-------------------------------- \n")
+				linksparallel = make([]*ipld.Link, 0)
+			}
+		}
+	}
+	return nil
 }
 
 // Close the reader (cancelling fetch node operations requested with
