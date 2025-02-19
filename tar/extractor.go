@@ -379,7 +379,7 @@ func (te *Extractor) extractFile(path string, r *tar.Reader) error {
 }
 
 func copyWithProgress(to io.Writer, from io.Reader, cb func(int64) int64) error {
-	buf := make([]byte, 4096)
+	buf := make([]byte, 1048576)
 	for {
 		n, err := from.Read(buf)
 		if n != 0 {
