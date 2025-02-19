@@ -435,7 +435,7 @@ func (dr *dagReader) READREP(w io.Writer) (n int64, err error) {
 		// Save the leaf node file data in a buffer in case it is only
 		// partially read now and future `CtxReadFull` calls reclaim the
 		// rest (as each node is visited only once during `Iterate`).
-
+		fmt.Fprintf(os.Stdout, "READ from NETWORK and WRITE to BUFFER then PIPE : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 		written, err := dr.writeNodeDataBuffer(w)
 		n += written
 		if err != nil {
