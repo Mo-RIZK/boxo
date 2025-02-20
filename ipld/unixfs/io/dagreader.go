@@ -420,7 +420,6 @@ func (dr *dagReader) READREP(w io.Writer) (n int64, err error) {
 	// to read its data into the `out` buffer, stop if there is an error or
 	// if the entire DAG is traversed (`EndOfDag`).
 	err = dr.dagWalker.Iterate(func(visitedNode ipld.NavigableNode) error {
-		fmt.Fprintf(os.Stdout, "END of downloading the chunk : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 		node := ipld.ExtractIPLDNode(visitedNode)
 
 		// Skip internal nodes, they shouldn't have any file data
@@ -428,6 +427,7 @@ func (dr *dagReader) READREP(w io.Writer) (n int64, err error) {
 		if len(node.Links()) > 0 {
 			return nil
 		}
+		fmt.Fprintf(os.Stdout, "END of downloading the chunk : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 
 		err = dr.saveNodeData(node)
 		if err != nil {
