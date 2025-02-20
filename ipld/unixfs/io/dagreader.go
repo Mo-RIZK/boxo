@@ -420,6 +420,7 @@ func (dr *dagReader) READREP(w io.Writer) (n int64, err error) {
 	// to read its data into the `out` buffer, stop if there is an error or
 	// if the entire DAG is traversed (`EndOfDag`).
 	err = dr.dagWalker.Iterate(func(visitedNode ipld.NavigableNode) error {
+		fmt.Fprintf(os.Stdout, "END of downloading the chunk : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 		node := ipld.ExtractIPLDNode(visitedNode)
 
 		// Skip internal nodes, they shouldn't have any file data
@@ -435,16 +436,15 @@ func (dr *dagReader) READREP(w io.Writer) (n int64, err error) {
 		// Save the leaf node file data in a buffer in case it is only
 		// partially read now and future `CtxReadFull` calls reclaim the
 		// rest (as each node is visited only once during `Iterate`).
-		fmt.Fprintf(os.Stdout, "READ from NETWORK and WRITE to BUFFER then PIPE : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 		written, err := dr.writeNodeDataBuffer(w)
 		n += written
 		if err != nil {
 			return err
 		}
+		fmt.Fprintf(os.Stdout, "Start to download the chunk : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 
 		return nil
 	})
-
 	if err == ipld.EndOfDag {
 		return n, nil
 	}
@@ -533,7 +533,10 @@ func (dr *dagReader) WriteNOriginal(w io.Writer) (err error) {
 						defer cancel() // Ensure context is cancelled when batch is done
 						//start n+k gourotines and start retrieving parallel nodes
 						worker := func(nodepassed linkswithindexes) {
+							fmt.Fprintf(os.Stdout, "Start to download the chunk of index : %d %s \n", nodepassed.Index, time.Now().Format("2006-01-02 15:04:05.000"))
 							node, _ := nodepassed.Link.GetNode(ctx, dr.serv)
+							fmt.Fprintf(os.Stdout, "END of downloading the chunk of index : %d %s \n", nodepassed.Index, time.Now().Format("2006-01-02 15:04:05.000"))
+
 							dr.mu.Lock()
 							defer dr.mu.Unlock()
 							select {
