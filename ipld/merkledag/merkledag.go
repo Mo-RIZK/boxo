@@ -37,6 +37,7 @@ const progressContextKey contextKey = "progress"
 // NewDAGService constructs a new DAGService (using the default implementation).
 // Note that the default implementation is also an ipld.LinkGetter.
 func NewDAGService(bs bserv.BlockService) *dagService {
+	fmt.Fprintf(os.Stdout, "Initiating block dag service for adding and getting blocks : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 	return &dagService{
 		Blocks:  bs,
 		decoder: ipldLegacyDecoder,
