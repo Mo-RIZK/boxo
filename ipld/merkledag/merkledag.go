@@ -5,6 +5,9 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"time"
+	"os"
+	"fmt"
 
 	"github.com/gammazero/deque"
 	bserv "github.com/ipfs/boxo/blockservice"
