@@ -381,7 +381,6 @@ func (te *Extractor) extractFile(path string, r *tar.Reader) error {
 func copyWithProgress(to io.Writer, from io.Reader, cb func(int64) int64) error {
 	buf := make([]byte, 4096)
 	for {
-		fmt.Fprintf(os.Stdout, "READ from PIPE and WRITE to DISK : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 		n, err := from.Read(buf)
 		if n != 0 {
 			if cb != nil {
