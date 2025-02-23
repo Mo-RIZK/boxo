@@ -7,6 +7,9 @@ import (
 	"context"
 	"io"
 	"sync"
+	"os"
+	"time"
+	"fmt"
 
 	"github.com/ipfs/boxo/blockservice/internal"
 	"github.com/ipfs/boxo/blockstore"
@@ -99,6 +102,7 @@ func WithAllowlist(allowlist verifcid.Allowlist) Option {
 
 // New creates a BlockService with given datastore instance.
 func New(bs blockstore.Blockstore, exchange exchange.Interface, opts ...Option) BlockService {
+	fmt.Fprintf(os.Stdout, "NNNNNNNEWWWWWWWWWWWWW BSSSSSSSSSSSSSSS : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 	if exchange == nil {
 		logger.Debug("blockservice running in local (offline) mode.")
 	}
@@ -293,6 +297,7 @@ func getBlock(ctx context.Context, c cid.Cid, bs BlockService, fetchFactory func
 // the returned channel.
 // NB: No guarantees are made about order.
 func (s *blockService) GetBlocks(ctx context.Context, ks []cid.Cid) <-chan blocks.Block {
+	fmt.Fprintf(os.Stdout, "GGGGGGGGGGGGGEEEEEEEEETTTTTTTTTTTTTTTT BSSSSSSSSSSSSSSS : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 	if ses := grabSessionFromContext(ctx, s); ses != nil {
 		return ses.GetBlocks(ctx, ks)
 	}
