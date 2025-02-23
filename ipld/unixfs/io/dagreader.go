@@ -533,9 +533,7 @@ func (dr *dagReader) WriteNOriginal(w io.Writer) (err error) {
 						defer cancel() // Ensure context is cancelled when batch is done
 						//start n+k gourotines and start retrieving parallel nodes
 						worker := func(nodepassed linkswithindexes) {
-							fmt.Fprintf(os.Stdout, "Start to download the chunk of index : %d %s \n", nodepassed.Index, time.Now().Format("2006-01-02 15:04:05.000"))
 							node, _ := nodepassed.Link.GetNode(ctx, dr.serv)
-							fmt.Fprintf(os.Stdout, "END of downloading the chunk of index : %d %s \n", nodepassed.Index, time.Now().Format("2006-01-02 15:04:05.000"))
 
 							dr.mu.Lock()
 							defer dr.mu.Unlock()
