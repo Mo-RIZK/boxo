@@ -236,7 +236,6 @@ func (s *blockService) AddBlocks(ctx context.Context, bs []blocks.Block) error {
 // GetBlock retrieves a particular block from the service,
 // Getting it from the datastore using the key (hash).
 func (s *blockService) GetBlock(ctx context.Context, c cid.Cid) (blocks.Block, error) {
-	fmt.Fprintf(os.Stdout, "33333333333333333333333333333333 GETTTTTTTTTTTTTTTTTT : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 	if ses := grabSessionFromContext(ctx, s); ses != nil {
 		return ses.GetBlock(ctx, c)
 	}
@@ -253,7 +252,6 @@ func (s *blockService) getExchangeFetcher() exchange.Fetcher {
 }
 
 func getBlock(ctx context.Context, c cid.Cid, bs BlockService, fetchFactory func() exchange.Fetcher) (blocks.Block, error) {
-	fmt.Fprintf(os.Stdout, "GGGGGGGGGGGGGGGGGGGGGGG111111111111111 : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 	err := verifcid.ValidateCid(grabAllowlistFromBlockservice(bs), c) // hash security
 	if err != nil {
 		return nil, err
@@ -270,25 +268,21 @@ func getBlock(ctx context.Context, c cid.Cid, bs BlockService, fetchFactory func
 	default:
 		return nil, err
 	}
-	fmt.Fprintf(os.Stdout, "GGGGGGGGGGGGGGGGGGGGGGG2222222222222 : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 	fetch := fetchFactory() // lazily create session if needed
 	if fetch == nil {
 		logger.Debug("BlockService GetBlock: Not found")
 		return nil, err
 	}
-	fmt.Fprintf(os.Stdout, "GGGGGGGGGGGGGGGGGGGGGGG3333333333333333333 : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 	logger.Debug("BlockService: Searching")
 	blk, err := fetch.GetBlock(ctx, c)
 	if err != nil {
 		return nil, err
 	}
 	// also write in the blockstore for caching, inform the exchange that the block is available
-	fmt.Fprintf(os.Stdout, "GGGGGGGGGGGGGGGGGGGGGGG44444444444444444 : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 	err = blockstore.Put(ctx, blk)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Fprintf(os.Stdout, "GGGGGGGGGGGGGGGGGGGGGGG555555555555555555 : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 	if ex := bs.Exchange(); ex != nil {
 		err = ex.NotifyNewBlocks(ctx, blk)
 		if err != nil {
@@ -296,7 +290,6 @@ func getBlock(ctx context.Context, c cid.Cid, bs BlockService, fetchFactory func
 		}
 	}
 	logger.Debugf("BlockService.BlockFetched %s", c)
-	fmt.Fprintf(os.Stdout, "GGGGGGGGGGGGGGGGGGGGGGG66666666666666 : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 	return blk, nil
 }
 
@@ -304,7 +297,6 @@ func getBlock(ctx context.Context, c cid.Cid, bs BlockService, fetchFactory func
 // the returned channel.
 // NB: No guarantees are made about order.
 func (s *blockService) GetBlocks(ctx context.Context, ks []cid.Cid) <-chan blocks.Block {
-	fmt.Fprintf(os.Stdout, "GGGGGGGGGGGGGEEEEEEEEETTTTTTTTTTTTTTTT BSSSSSSSSSSSSSSS : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 	if ses := grabSessionFromContext(ctx, s); ses != nil {
 		return ses.GetBlocks(ctx, ks)
 	}
@@ -316,7 +308,6 @@ func (s *blockService) GetBlocks(ctx context.Context, ks []cid.Cid) <-chan block
 }
 
 func getBlocks(ctx context.Context, ks []cid.Cid, blockservice BlockService, fetchFactory func() exchange.Fetcher) <-chan blocks.Block {
-	fmt.Fprintf(os.Stdout, "5555555555555555555555555555 gggggggggggggggggg : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 	out := make(chan blocks.Block)
 
 	go func() {
@@ -478,7 +469,6 @@ func (s *Session) GetBlock(ctx context.Context, c cid.Cid) (blocks.Block, error)
 
 // GetBlocks gets blocks in the context of a request session
 func (s *Session) GetBlocks(ctx context.Context, ks []cid.Cid) <-chan blocks.Block {
-	fmt.Fprintf(os.Stdout, "7777777777777777777777777777777 AAAAAADDDDDDDDD : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 	ctx, span := internal.StartSpan(ctx, "Session.GetBlocks")
 	defer span.End()
 
