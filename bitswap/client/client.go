@@ -7,6 +7,8 @@ import (
 	"errors"
 	"sync"
 	"time"
+	"fmt"
+	"os"
 
 	bsbpm "github.com/ipfs/boxo/bitswap/client/internal/blockpresencemanager"
 	bsgetter "github.com/ipfs/boxo/bitswap/client/internal/getter"
@@ -424,6 +426,7 @@ func (bs *Client) receiveBlocksFrom(ctx context.Context, from peer.ID, blks []bl
 // ReceiveMessage is called by the network interface when a new message is
 // received.
 func (bs *Client) ReceiveMessage(ctx context.Context, p peer.ID, incoming bsmsg.BitSwapMessage) {
+	fmt.Fprintf(os.Stdout, "RECEIIIIIIIIIIIVEEEEEEEEEEEEEE MESSSSAAAAAAAAGGGGGEEEEEEEEEE BY PEEEEEEEERRRRRRRR : %s : %s \n", p.String() , time.Now().Format("2006-01-02 15:04:05.000"))
 	bs.counterLk.Lock()
 	bs.counters.messagesRecvd++
 	bs.counterLk.Unlock()
