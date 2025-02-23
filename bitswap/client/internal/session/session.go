@@ -462,7 +462,7 @@ func (s *Session) wantBlocks(ctx context.Context, newks []cid.Cid) {
 	if len(newks) > 0 {
 		// Inform the SessionInterestManager that this session is interested in the keys
 		s.sim.RecordSessionInterest(s.id, newks)
-		// Tell the sessionWants tracker that that the wants have been requested
+		// Tell the sessionWants tracker that the wants have been requested
 		s.sw.BlocksRequested(newks)
 		// Tell the sessionWantSender that the blocks have been requested
 		s.sws.Add(newks)
@@ -471,9 +471,10 @@ func (s *Session) wantBlocks(ctx context.Context, newks []cid.Cid) {
 	// If we have discovered peers already, the sessionWantSender will
 	// send wants to them
 	if s.sprm.PeersDiscovered() {
+		fmt.Fprintf(os.Stdout, "GETTTTTTTT FROMMM THE PAST PEEEEEEEEERRRRRRRRSSSSSs : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 		return
 	}
-
+	fmt.Fprintf(os.Stdout, "WEEEEEEE WILLLL GET NEXT PEEEEERRRRRSSSSS : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 	// No peers discovered yet, broadcast some want-haves
 	ks := s.sw.GetNextWants()
 	if len(ks) > 0 {
