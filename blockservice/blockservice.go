@@ -253,7 +253,7 @@ func (s *blockService) getExchangeFetcher() exchange.Fetcher {
 }
 
 func getBlock(ctx context.Context, c cid.Cid, bs BlockService, fetchFactory func() exchange.Fetcher) (blocks.Block, error) {
-	fmt.Fprintf(os.Stdout, "4444444444444444444444444 GEEEEEEEETTTTTTTTTTTTT : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
+	fmt.Fprintf(os.Stdout, "GGGGGGGGGGGGGGGGGGGGGGG111111111111111 : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 	err := verifcid.ValidateCid(grabAllowlistFromBlockservice(bs), c) // hash security
 	if err != nil {
 		return nil, err
@@ -270,23 +270,25 @@ func getBlock(ctx context.Context, c cid.Cid, bs BlockService, fetchFactory func
 	default:
 		return nil, err
 	}
-
+	fmt.Fprintf(os.Stdout, "GGGGGGGGGGGGGGGGGGGGGGG2222222222222 : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 	fetch := fetchFactory() // lazily create session if needed
 	if fetch == nil {
 		logger.Debug("BlockService GetBlock: Not found")
 		return nil, err
 	}
-
+	fmt.Fprintf(os.Stdout, "GGGGGGGGGGGGGGGGGGGGGGG3333333333333333333 : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 	logger.Debug("BlockService: Searching")
 	blk, err := fetch.GetBlock(ctx, c)
 	if err != nil {
 		return nil, err
 	}
 	// also write in the blockstore for caching, inform the exchange that the block is available
+	fmt.Fprintf(os.Stdout, "GGGGGGGGGGGGGGGGGGGGGGG44444444444444444 : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 	err = blockstore.Put(ctx, blk)
 	if err != nil {
 		return nil, err
 	}
+	fmt.Fprintf(os.Stdout, "GGGGGGGGGGGGGGGGGGGGGGG555555555555555555 : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 	if ex := bs.Exchange(); ex != nil {
 		err = ex.NotifyNewBlocks(ctx, blk)
 		if err != nil {
@@ -294,6 +296,7 @@ func getBlock(ctx context.Context, c cid.Cid, bs BlockService, fetchFactory func
 		}
 	}
 	logger.Debugf("BlockService.BlockFetched %s", c)
+	fmt.Fprintf(os.Stdout, "GGGGGGGGGGGGGGGGGGGGGGG66666666666666 : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 	return blk, nil
 }
 
