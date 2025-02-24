@@ -410,7 +410,7 @@ func (bs *Client) receiveBlocksFrom(ctx context.Context, from peer.ID, blks []bl
 	bs.sm.ReceiveFrom(ctx, from, allKs, haves, dontHaves)
 
 	if bs.blockReceivedNotifier != nil {
-		fmt.Fprintf(os.Stdout, "!!!!!!!!!!!!!!!!!!!!!! 44444444444444444444 : %s : %s \n", p.String(), time.Now().Format("2006-01-02 15:04:05.000"))
+		fmt.Fprintf(os.Stdout, "!!!!!!!!!!!!!!!!!!!!!! 44444444444444444444 : %s : %s \n", from.String(), time.Now().Format("2006-01-02 15:04:05.000"))
 		bs.blockReceivedNotifier.ReceivedBlocks(from, wanted)
 	}
 
