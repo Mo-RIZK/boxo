@@ -7,8 +7,8 @@ import (
 	"errors"
 	"sync"
 	"time"
-	"fmt"
 	"os"
+	"fmt"
 
 	bsbpm "github.com/ipfs/boxo/bitswap/client/internal/blockpresencemanager"
 	bsgetter "github.com/ipfs/boxo/bitswap/client/internal/getter"
@@ -435,10 +435,13 @@ func (bs *Client) ReceiveMessage(ctx context.Context, p peer.ID, incoming bsmsg.
 	}
 
 	iblocks := incoming.Blocks()
+
 	if len(iblocks) > 0 {
 		bs.updateReceiveCounters(iblocks)
-		for _, b := range iblocks {
-			log.Debugf("[recv] block; cid=%s, peer=%s", b.Cid(), p)
+		if log.Level().Enabled(zapcore.DebugLevel) {
+			for _, b := range iblocks {
+				log.Debugf("[recv] block; cid=%s, peer=%s", b.Cid(), p)
+			}
 		}
 	}
 
@@ -451,7 +454,7 @@ func (bs *Client) ReceiveMessage(ctx context.Context, p peer.ID, incoming bsmsg.
 			log.Warnf("ReceiveMessage recvBlockFrom error: %s", err)
 			return
 		}
-		fmt.Fprintf(os.Stdout, VVVVVVVVVVVVVVVVVVVVVVVVVVV : %s : %s \n", p.String(), time.Now().Format("2006-01-02 15:04:05.000"))
+		fmt.Fprintf(os.Stdout, "!!!!!!!!!!!!!!!!!!!!!! 44444444444444444444 : %s : %s \n", p.String(), time.Now().Format("2006-01-02 15:04:05.000"))
 	}
 }
 
