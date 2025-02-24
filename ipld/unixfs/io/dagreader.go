@@ -398,7 +398,7 @@ func (dr *dagReader) WriteTo(w io.Writer) (n int64, err error) {
 	if dr.or == 0 {
 		return dr.READREP(w)
 	} else {
-		return dr.READEC(w)
+		return dr.TRYEC(w)
 	}
 
 }
@@ -420,6 +420,7 @@ func (dr *dagReader) READREP(w io.Writer) (n int64, err error) {
 	// to read its data into the `out` buffer, stop if there is an error or
 	// if the entire DAG is traversed (`EndOfDag`).
 	err = dr.dagWalker.Iterate(func(visitedNode ipld.NavigableNode) error {
+		fmt.Fprintf(os.Stdout, "END of downloading the chunk : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 		node := ipld.ExtractIPLDNode(visitedNode)
 
 		// Skip internal nodes, they shouldn't have any file data
@@ -427,7 +428,6 @@ func (dr *dagReader) READREP(w io.Writer) (n int64, err error) {
 		if len(node.Links()) > 0 {
 			return nil
 		}
-		fmt.Fprintf(os.Stdout, "END of downloading the chunk : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 
 		err = dr.saveNodeData(node)
 		if err != nil {
@@ -445,6 +445,7 @@ func (dr *dagReader) READREP(w io.Writer) (n int64, err error) {
 
 		return nil
 	})
+
 	if err == ipld.EndOfDag {
 		return n, nil
 	}
@@ -452,7 +453,56 @@ func (dr *dagReader) READREP(w io.Writer) (n int64, err error) {
 	return n, err
 }
 
-func (dr *dagReader) READEC(w io.Writer) (n int64, err error) {
+func (dr *dagReader) TRYEC(w io.Writer) (n int64, err error) {
+	// Use the internal reader's context to fetch the child node promises
+	// (see `ipld.NavigableIPLDNode.FetchChild` for details).
+	dr.dagWalker.SetContext(dr.ctx)
+
+	// If there was a partially read buffer from the last visited
+	// node read it before visiting a new one.
+	if dr.currentNodeData != nil {
+		n, err = dr.writeNodeDataBuffer(w)
+		if err != nil {
+			return n, err
+		}
+	}
+
+	// Iterate the DAG calling the passed `Visitor` function on every node
+	// to read its data into the `out` buffer, stop if there is an error or
+	// if the entire DAG is traversed (`EndOfDag`).
+	err = dr.dagWalker.ECIterate(func(visitedNode ipld.NavigableNode) error {
+		node := ipld.ExtractIPLDNode(visitedNode)
+
+		// Skip internal nodes, they shouldn't have any file data
+		// (see the `balanced` package for more details).
+		if len(node.Links()) > 0 {
+			return nil
+		}
+
+		err = dr.saveNodeData(node)
+		if err != nil {
+			return err
+		}
+		// Save the leaf node file data in a buffer in case it is only
+		// partially read now and future `CtxReadFull` calls reclaim the
+		// rest (as each node is visited only once during `Iterate`).
+		written, err := dr.writeNodeDataBuffer(w)
+		n += written
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err == ipld.EndOfDag {
+		return n, nil
+	}
+
+	return n, err
+}
+
+/*func (dr *dagReader) READEC(w io.Writer) (n int64, err error) {
 	// Use the internal reader's context to fetch the child node promises
 	// (see `ipld.NavigableIPLDNode.FetchChild` for details).
 	dr.dagWalker.SetContext(dr.ctx)
@@ -483,7 +533,7 @@ func (dr *dagReader) READEC(w io.Writer) (n int64, err error) {
 			/*dr.WriteN(w)
 			fmt.Fprintf(os.Stdout, "Time taken to reconstruct nodes : %s \n", dr.timetakenDecode.String())
 			fmt.Fprintf(os.Stdout, "Time taken for verification : %s \n", dr.verificationTime.String())
-			*/return 0, nil
+			*return 0, nil
 		}
 		if dr.mechanism == "allN" {
 			dr.WriteNPlusK(w)
@@ -502,14 +552,14 @@ func (dr *dagReader) READEC(w io.Writer) (n int64, err error) {
 			/*dr.WriteNPlsOne(w)
 			fmt.Fprintf(os.Stdout, "Time taken to reconstruct nodes : %s \n", dr.timetakenDecode.String())
 			fmt.Fprintf(os.Stdout, "Time taken for verification : %s \n", dr.verificationTime.String())
-			*/return 0, nil
+			*return 0, nil
 		}
 
 	}
 
 	return n, err
 
-}
+}*/
 
 // //////////////////// Downloading only the original data /////////////////////
 func (dr *dagReader) WriteNOriginal(w io.Writer) (err error) {
@@ -533,7 +583,9 @@ func (dr *dagReader) WriteNOriginal(w io.Writer) (err error) {
 						defer cancel() // Ensure context is cancelled when batch is done
 						//start n+k gourotines and start retrieving parallel nodes
 						worker := func(nodepassed linkswithindexes) {
+							fmt.Fprintf(os.Stdout, "Start to download the chunk of index : %d %s \n", nodepassed.Index, time.Now().Format("2006-01-02 15:04:05.000"))
 							node, _ := nodepassed.Link.GetNode(ctx, dr.serv)
+							fmt.Fprintf(os.Stdout, "END of downloading the chunk of index : %d %s \n", nodepassed.Index, time.Now().Format("2006-01-02 15:04:05.000"))
 
 							dr.mu.Lock()
 							defer dr.mu.Unlock()
@@ -578,9 +630,9 @@ func (dr *dagReader) WriteNOriginal(w io.Writer) (err error) {
 						for i, shard := range shards {
 							if i < dr.or {
 								if written+int64(len(shard)) < int64(dr.size) {
+									fmt.Fprintf(os.Stdout, "READ from NETWORK and WRITE to BUFFER then PIPE : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 									//writeondisk = append(writeondisk, shard...)
 									dr.currentNodeData = bytes.NewReader(shard)
-									fmt.Fprintf(os.Stdout, "READ from NETWORK and WRITE to BUFFER then PIPE : %s \n",time.Now().Format("2006-01-02 15:04:05.000"))
 									writtenn, _ := dr.writeNodeDataBuffer(w)
 									written += int64(writtenn)
 								} else {
