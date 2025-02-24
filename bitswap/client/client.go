@@ -426,7 +426,7 @@ func (bs *Client) receiveBlocksFrom(ctx context.Context, from peer.ID, blks []bl
 // ReceiveMessage is called by the network interface when a new message is
 // received.
 func (bs *Client) ReceiveMessage(ctx context.Context, p peer.ID, incoming bsmsg.BitSwapMessage) {
-	fmt.Fprintf(os.Stdout, "RECEIIIIIIIIIIIVEEEEEEEEEEEEEE MESSSSAAAAAAAAGGGGGEEEEEEEEEE BY PEEEEEEEERRRRRRRR : %s : %s \n", p.String() , time.Now().Format("2006-01-02 15:04:05.000"))
+	fmt.Fprintf(os.Stdout, "!!!!!!!!!!!!!!!!!!!!!! 0000000000000000000000 : %s : %s \n", p.String(), time.Now().Format("2006-01-02 15:04:05.000"))
 	bs.counterLk.Lock()
 	bs.counters.messagesRecvd++
 	bs.counterLk.Unlock()
@@ -436,18 +436,18 @@ func (bs *Client) ReceiveMessage(ctx context.Context, p peer.ID, incoming bsmsg.
 	}
 
 	iblocks := incoming.Blocks()
-
+	fmt.Fprintf(os.Stdout, "!!!!!!!!!!!!!!!!!!!!!! 111111111111111111 : %s : %s \n", p.String(), time.Now().Format("2006-01-02 15:04:05.000"))
 	if len(iblocks) > 0 {
 		bs.updateReceiveCounters(iblocks)
-		if log.Level().Enabled(zapcore.DebugLevel) {
-			for _, b := range iblocks {
-				log.Debugf("[recv] block; cid=%s, peer=%s", b.Cid(), p)
-			}
+		for _, b := range iblocks {
+			log.Debugf("[recv] block; cid=%s, peer=%s", b.Cid(), p)
 		}
+		fmt.Fprintf(os.Stdout, "!!!!!!!!!!!!!!!!!!!!!! 2222222222222222 : %s : %s \n", p.String(), time.Now().Format("2006-01-02 15:04:05.000"))
 	}
 
 	haves := incoming.Haves()
 	dontHaves := incoming.DontHaves()
+	fmt.Fprintf(os.Stdout, "!!!!!!!!!!!!!!!!!!!!!! 333333333333333333 : %s : %s \n", p.String(), time.Now().Format("2006-01-02 15:04:05.000"))
 	if len(iblocks) > 0 || len(haves) > 0 || len(dontHaves) > 0 {
 		// Process blocks
 		err := bs.receiveBlocksFrom(ctx, p, iblocks, haves, dontHaves)
@@ -455,6 +455,7 @@ func (bs *Client) ReceiveMessage(ctx context.Context, p peer.ID, incoming bsmsg.
 			log.Warnf("ReceiveMessage recvBlockFrom error: %s", err)
 			return
 		}
+		fmt.Fprintf(os.Stdout, "!!!!!!!!!!!!!!!!!!!!!! 44444444444444444444 : %s : %s \n", p.String(), time.Now().Format("2006-01-02 15:04:05.000"))
 	}
 }
 
