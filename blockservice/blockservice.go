@@ -102,7 +102,6 @@ func WithAllowlist(allowlist verifcid.Allowlist) Option {
 
 // New creates a BlockService with given datastore instance.
 func New(bs blockstore.Blockstore, exchange exchange.Interface, opts ...Option) BlockService {
-	fmt.Fprintf(os.Stdout, "NNNNNNNEWWWWWWWWWWWWW BSSSSSSSSSSSSSSS : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 	if exchange == nil {
 		logger.Debug("blockservice running in local (offline) mode.")
 	}
@@ -157,7 +156,6 @@ func newSession(ctx context.Context, bs BlockService) *Session {
 
 // AddBlock adds a particular block to the service, Putting it into the datastore.
 func (s *blockService) AddBlock(ctx context.Context, o blocks.Block) error {
-	fmt.Fprintf(os.Stdout, "11111111111111111111111 AAAAAADDDDDDDDD : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 	ctx, span := internal.StartSpan(ctx, "blockService.AddBlock")
 	defer span.End()
 
@@ -188,7 +186,6 @@ func (s *blockService) AddBlock(ctx context.Context, o blocks.Block) error {
 }
 
 func (s *blockService) AddBlocks(ctx context.Context, bs []blocks.Block) error {
-	fmt.Fprintf(os.Stdout, "2222222222222222222222222 AAAAAADDDDDDDDD : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 	ctx, span := internal.StartSpan(ctx, "blockService.AddBlocks")
 	defer span.End()
 
@@ -460,7 +457,6 @@ func (s *Session) grabSession() exchange.Fetcher {
 
 // GetBlock gets a block in the context of a request session
 func (s *Session) GetBlock(ctx context.Context, c cid.Cid) (blocks.Block, error) {
-	fmt.Fprintf(os.Stdout, "66666666666666666666666666666666 GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 	ctx, span := internal.StartSpan(ctx, "Session.GetBlock", trace.WithAttributes(attribute.Stringer("CID", c)))
 	defer span.End()
 
