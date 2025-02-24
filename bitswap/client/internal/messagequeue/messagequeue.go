@@ -571,7 +571,6 @@ func (mq *MessageQueue) sendMessage() {
 	defer mq.msg.Reset(false)
 
 	var wantlist []bsmsg.Entry
-	fmt.Fprintf(os.Stdout, "Sending message to the peeeeeeeeerrrrrrrrr : %s %s \n",mq.p.String(), time.Now().Format("2006-01-02 15:04:05.000"))
 	for {
 		// Convert want lists to a Bitswap Message
 		message, onSent := mq.extractOutgoingMessage(supportsHave)
