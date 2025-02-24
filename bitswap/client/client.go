@@ -454,7 +454,6 @@ func (bs *Client) ReceiveMessage(ctx context.Context, p peer.ID, incoming bsmsg.
 			log.Warnf("ReceiveMessage recvBlockFrom error: %s", err)
 			return
 		}
-		fmt.Fprintf(os.Stdout, "!!!!!!!!!!!!!!!!!!!!!! 44444444444444444444 : %s : %s \n", p.String(), time.Now().Format("2006-01-02 15:04:05.000"))
 	}
 }
 
