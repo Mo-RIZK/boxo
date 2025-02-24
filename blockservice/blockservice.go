@@ -7,9 +7,6 @@ import (
 	"context"
 	"io"
 	"sync"
-	"os"
-	"time"
-	"fmt"
 
 	"github.com/ipfs/boxo/blockservice/internal"
 	"github.com/ipfs/boxo/blockstore"
