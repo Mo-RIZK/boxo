@@ -78,7 +78,7 @@ require (
 	golang.org/x/sys v0.30.0
 	google.golang.org/protobuf v1.36.4
 )
-replace github.com/ipfs/go-ipld-format v0.6.0 => github.com/Mo-RIZK/go-ipld-format v0.0.0-20250224170929-37ab49d1cce3
+replace github.com/ipfs/go-ipld-format v0.6.0 => github.com/Mo-RIZK/go-ipld-format v0.0.0-20250224174618-51764a9199b9
 require (
 	github.com/Jorropo/jsync v1.0.1 // indirect
 	github.com/benbjohnson/clock v1.3.5 // indirect
