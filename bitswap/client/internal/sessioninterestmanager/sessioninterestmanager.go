@@ -2,7 +2,9 @@ package sessioninterestmanager
 
 import (
 	"sync"
-
+	"os"
+	"fmt"
+	"time"
 	blocks "github.com/ipfs/go-block-format"
 	cid "github.com/ipfs/go-cid"
 )
