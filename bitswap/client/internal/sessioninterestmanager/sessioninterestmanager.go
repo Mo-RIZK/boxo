@@ -142,7 +142,9 @@ func (sim *SessionInterestManager) SplitWantedUnwanted(blks []blocks.Block) ([]b
 	wantedBlks := make([]blocks.Block, 0, len(blks))
 	var notWantedBlks []blocks.Block
 	for _, b := range blks {
-		if wantedKs.Has(b.Cid()) {
+		cc := b.Cid()
+		if wantedKs.Has(cc) {
+			fmt.Fprintf(os.Stdout, "RRRRRRRTTTTTTTRRRRRRRRRRR bloooccccckkkkkkkk cid : %s %s \n", cc.String(), time.Now().Format("2006-01-02 15:04:05.000"))
 			wantedBlks = append(wantedBlks, b)
 		} else {
 			notWantedBlks = append(notWantedBlks, b)
