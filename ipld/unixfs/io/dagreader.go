@@ -541,13 +541,13 @@ func (dr *dagReader) WriteNOriginal(w io.Writer) (err error) {
 							start := time.Now()
 							node, _ := nodepassed.Link.GetNode(ctx, dr.serv)
 							end := time.Since(start)
-							fmt.Fprintf(os.Stdout, "Time taken to retrieve this node is : %s \n",end.String())
+							fmt.Fprintf(os.Stdout, "Time taken to retrieve this node is : %s \n", end.String())
 							dr.mu.Lock()
 							defer dr.mu.Unlock()
 							fmt.Fprintf(os.Stdout, "Retrieved on : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 							select {
 							case <-ctx.Done():
-								fmt.Fprintf(os.Stdout, " In doneeeeee and the number of nodes entering this phase are : %d \n",wrote)
+								fmt.Fprintf(os.Stdout, " In doneeeeee and the number of nodes entering this phase are : %d \n", wrote)
 								// Context cancelled, goroutine terminates early
 								if ctx.Err() == context.DeadlineExceeded {
 									fmt.Println("Timeout reached")
@@ -557,7 +557,7 @@ func (dr *dagReader) WriteNOriginal(w io.Writer) (err error) {
 							default:
 								fmt.Fprintf(os.Stdout, "Entered processing on : %s \n", time.Now().Format("2006-01-02 15:04:05.000"))
 								wrote++
-								fmt.Fprintf(os.Stdout, "In default and The number of nodes entering this phase are : %d \n",wrote)
+								fmt.Fprintf(os.Stdout, "In default and The number of nodes entering this phase are : %d \n", wrote)
 								doneChan <- nodeswithindexes{Node: node, Index: nodepassed.Index}
 								if wrote == dr.or {
 									cancel()
@@ -641,7 +641,10 @@ func (dr *dagReader) WriteNPlusK(w io.Writer) (err error) {
 				defer cancel() // Ensure context is cancelled when batch is done
 				//start n+k gourotines and start retrieving parallel nodes
 				worker := func(nodepassed linkswithindexes) {
+					start := time.Now()
 					node, _ := nodepassed.Link.GetNode(ctx, dr.serv)
+					end := time.Since(start)
+					fmt.Fprintf(os.Stdout, "Time taken to retrieve this node is : %s \n", end.String())
 					dr.mu.Lock()
 					defer dr.mu.Unlock()
 					select {
