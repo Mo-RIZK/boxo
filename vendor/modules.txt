@@ -100,8 +100,6 @@ github.com/google/pprof/profile
 # github.com/google/uuid v1.6.0
 ## explicit
 github.com/google/uuid
-# github.com/gopherjs/gopherjs v0.0.0-20190430165422-3e4dfb77656c
-## explicit
 # github.com/gorilla/mux v1.8.1
 ## explicit; go 1.20
 github.com/gorilla/mux
@@ -134,6 +132,97 @@ github.com/huin/goupnp/ssdp
 # github.com/ipfs/bbloom v0.0.4
 ## explicit; go 1.12
 github.com/ipfs/bbloom
+# github.com/ipfs/boxo v0.29.1
+## explicit; go 1.23.0
+github.com/ipfs/boxo/bitswap
+github.com/ipfs/boxo/bitswap/client
+github.com/ipfs/boxo/bitswap/client/internal
+github.com/ipfs/boxo/bitswap/client/internal/blockpresencemanager
+github.com/ipfs/boxo/bitswap/client/internal/getter
+github.com/ipfs/boxo/bitswap/client/internal/messagequeue
+github.com/ipfs/boxo/bitswap/client/internal/notifications
+github.com/ipfs/boxo/bitswap/client/internal/peermanager
+github.com/ipfs/boxo/bitswap/client/internal/session
+github.com/ipfs/boxo/bitswap/client/internal/sessioninterestmanager
+github.com/ipfs/boxo/bitswap/client/internal/sessionmanager
+github.com/ipfs/boxo/bitswap/client/internal/sessionpeermanager
+github.com/ipfs/boxo/bitswap/client/traceability
+github.com/ipfs/boxo/bitswap/client/wantlist
+github.com/ipfs/boxo/bitswap/internal
+github.com/ipfs/boxo/bitswap/internal/defaults
+github.com/ipfs/boxo/bitswap/message
+github.com/ipfs/boxo/bitswap/message/pb
+github.com/ipfs/boxo/bitswap/metrics
+github.com/ipfs/boxo/bitswap/network
+github.com/ipfs/boxo/bitswap/network/bsnet
+github.com/ipfs/boxo/bitswap/network/bsnet/internal
+github.com/ipfs/boxo/bitswap/server
+github.com/ipfs/boxo/bitswap/server/internal/decision
+github.com/ipfs/boxo/bitswap/testinstance
+github.com/ipfs/boxo/bitswap/testnet
+github.com/ipfs/boxo/bitswap/tracer
+github.com/ipfs/boxo/blockservice
+github.com/ipfs/boxo/blockservice/internal
+github.com/ipfs/boxo/blockservice/test
+github.com/ipfs/boxo/blockstore
+github.com/ipfs/boxo/chunker
+github.com/ipfs/boxo/datastore/dshelp
+github.com/ipfs/boxo/exchange
+github.com/ipfs/boxo/exchange/offline
+github.com/ipfs/boxo/fetcher
+github.com/ipfs/boxo/fetcher/helpers
+github.com/ipfs/boxo/fetcher/impl/blockservice
+github.com/ipfs/boxo/fetcher/testutil
+github.com/ipfs/boxo/files
+github.com/ipfs/boxo/filestore/pb
+github.com/ipfs/boxo/filestore/posinfo
+github.com/ipfs/boxo/gateway/assets
+github.com/ipfs/boxo/internal/test
+github.com/ipfs/boxo/ipld/merkledag
+github.com/ipfs/boxo/ipld/merkledag/dagutils
+github.com/ipfs/boxo/ipld/merkledag/pb
+github.com/ipfs/boxo/ipld/merkledag/test
+github.com/ipfs/boxo/ipld/unixfs
+github.com/ipfs/boxo/ipld/unixfs/file
+github.com/ipfs/boxo/ipld/unixfs/hamt
+github.com/ipfs/boxo/ipld/unixfs/importer
+github.com/ipfs/boxo/ipld/unixfs/importer/balanced
+github.com/ipfs/boxo/ipld/unixfs/importer/helpers
+github.com/ipfs/boxo/ipld/unixfs/importer/trickle
+github.com/ipfs/boxo/ipld/unixfs/internal
+github.com/ipfs/boxo/ipld/unixfs/io
+github.com/ipfs/boxo/ipld/unixfs/mod
+github.com/ipfs/boxo/ipld/unixfs/pb
+github.com/ipfs/boxo/ipld/unixfs/private/linksize
+github.com/ipfs/boxo/ipld/unixfs/test
+github.com/ipfs/boxo/ipns
+github.com/ipfs/boxo/ipns/pb
+github.com/ipfs/boxo/keystore
+github.com/ipfs/boxo/namesys
+github.com/ipfs/boxo/namesys/republisher
+github.com/ipfs/boxo/path
+github.com/ipfs/boxo/path/resolver
+github.com/ipfs/boxo/pinning/pinner
+github.com/ipfs/boxo/pinning/pinner/dsindex
+github.com/ipfs/boxo/pinning/pinner/dspinner
+github.com/ipfs/boxo/pinning/remote/client
+github.com/ipfs/boxo/pinning/remote/client/openapi
+github.com/ipfs/boxo/provider
+github.com/ipfs/boxo/provider/internal/queue
+github.com/ipfs/boxo/routing/http/contentrouter
+github.com/ipfs/boxo/routing/http/filters
+github.com/ipfs/boxo/routing/http/internal
+github.com/ipfs/boxo/routing/http/internal/drjson
+github.com/ipfs/boxo/routing/http/server
+github.com/ipfs/boxo/routing/http/types
+github.com/ipfs/boxo/routing/http/types/iter
+github.com/ipfs/boxo/routing/http/types/json
+github.com/ipfs/boxo/routing/http/types/ndjson
+github.com/ipfs/boxo/routing/mock
+github.com/ipfs/boxo/routing/offline
+github.com/ipfs/boxo/routing/providerquerymanager
+github.com/ipfs/boxo/util
+github.com/ipfs/boxo/verifcid
 # github.com/ipfs/go-bitfield v1.1.0
 ## explicit; go 1.19
 github.com/ipfs/go-bitfield

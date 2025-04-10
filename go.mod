@@ -1,4 +1,4 @@
-module github.com/ipfs/boxo
+module github.com/Mo-RIZK/boxo
 
 go 1.23.0
 
@@ -16,6 +16,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/hashicorp/golang-lru/v2 v2.0.7
 	github.com/ipfs/bbloom v0.0.4
+	github.com/ipfs/boxo v0.29.1
 	github.com/ipfs/go-bitfield v1.1.0
 	github.com/ipfs/go-block-format v0.2.0
 	github.com/ipfs/go-cid v0.5.0
@@ -103,7 +104,6 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/gopacket v1.1.19 // indirect
 	github.com/google/pprof v0.0.0-20250208200701-d0013a598941 // indirect
-	github.com/gopherjs/gopherjs v0.0.0-20190430165422-3e4dfb77656c // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
