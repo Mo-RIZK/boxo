@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"slices"
 	"sort"
+	"strings"
 	"time"
 
 	blocks "github.com/ipfs/go-block-format"
@@ -580,6 +582,12 @@ func (n *ProtoNode) Tree(p string, depth int) []string {
 	return out
 }
 
+func (n *ProtoNode) sortLinks() {
+	slices.SortStableFunc(n.links, func(a, b *format.Link) int {
+		return strings.Compare(a.Name, b.Name)
+	})
+}
+
 func ProtoNodeConverter(b blocks.Block, nd ipld.Node) (legacy.UniversalNode, error) {
 	pbNode, ok := nd.(dagpb.PBNode)
 	if !ok {
@@ -588,6 +596,7 @@ func ProtoNodeConverter(b blocks.Block, nd ipld.Node) (legacy.UniversalNode, err
 	encoded := &immutableProtoNode{b.RawData(), pbNode}
 	pn := fromImmutableNode(encoded)
 	pn.cached = b.Cid()
+	pn.builder = b.Cid().Prefix()
 	pn.builder = b.Cid().Prefix()
 	return pn, nil
 }
