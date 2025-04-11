@@ -64,6 +64,26 @@ func fromImmutableNode(encoded *immutableProtoNode) *ProtoNode {
 		link.Cid = c
 		n.links[i] = link
 	}
+
+	// Extract 'or' and 'par' values (for EC nodes)
+	if v, err := n.encoded.PBNode.LookupByString("or"); err == nil {
+		if val, err := v.AsInt(); err == nil {
+			n.Or = int(val) // Assign the 'or' field to ProtoNode
+		}
+	}
+
+	if v, err := n.encoded.PBNode.LookupByString("par"); err == nil {
+		if val, err := v.AsInt(); err == nil {
+			n.Par = int(val) // Assign the 'par' field to ProtoNode
+		}
+	}
+
+	if v, err := n.encoded.PBNode.LookupByString("chunksize"); err == nil {
+		if val, err := v.AsInt(); err == nil {
+			n.chunksize = int(val) // Assign the 'par' field to ProtoNode
+		}
+	}
+
 	// we don't set n.linksDirty because the order of the links list from
 	// serialized form needs to be stable, until we start mutating the ProtoNode
 	return n
@@ -92,6 +112,11 @@ func (n *ProtoNode) marshalImmutable() (*immutableProtoNode, error) {
 		}))
 		if n.data != nil {
 			qp.MapEntry(ma, "Data", qp.Bytes(n.data))
+		}
+		if n.Ec {
+			qp.MapEntry(ma, "or", qp.Int(int64(n.Or)))
+			qp.MapEntry(ma, "par", qp.Int(int64(n.Par)))
+			qp.MapEntry(ma, "chunksize", qp.Int(int64(n.chunksize)))
 		}
 	})
 	if err != nil {
