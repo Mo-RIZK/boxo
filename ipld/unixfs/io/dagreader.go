@@ -166,6 +166,7 @@ func NewDagReaderAlt(ctx context.Context, n ipld.Node, serv ipld.NodeGetter, mec
 
 	ctxWithCancel, cancel := context.WithCancel(ctx)
 	stat, _ := n.Stat()
+	fmt.Fprintf(os.Stdout, "HEREEEEEEE is the stat stats : or: %d par: %d chunk size : %d \n", stat.NumLinks, stat.BlockSize, stat.LinksSize)
 	return &dagReader{
 		ctx:         ctxWithCancel,
 		cancel:      cancel,

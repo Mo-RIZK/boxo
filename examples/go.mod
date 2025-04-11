@@ -3,7 +3,7 @@ module github.com/ipfs/boxo/examples
 go 1.23.0
 
 require (
-	github.com/ipfs/boxo v0.28.0
+	github.com/ipfs/boxo v0.29.1
 	github.com/ipfs/go-block-format v0.2.0
 	github.com/ipfs/go-cid v0.5.0
 	github.com/ipfs/go-datastore v0.8.2
