@@ -113,11 +113,11 @@ func (n *ProtoNode) marshalImmutable() (*immutableProtoNode, error) {
 		if n.data != nil {
 			qp.MapEntry(ma, "Data", qp.Bytes(n.data))
 		}
-		if n.Ec {
+		/*if n.Ec {
 			qp.MapEntry(ma, "or", qp.Int(int64(n.Or)))
 			qp.MapEntry(ma, "par", qp.Int(int64(n.Par)))
 			qp.MapEntry(ma, "chunksize", qp.Int(int64(n.chunksize)))
-		}
+		}*/
 	})
 	if err != nil {
 		return nil, err
