@@ -66,7 +66,7 @@ func fromImmutableNode(encoded *immutableProtoNode) *ProtoNode {
 	}
 
 	// Extract 'or' and 'par' values (for EC nodes)
-	if v, err := n.encoded.PBNode.LookupByString("or"); err == nil {
+	/*if v, err := n.encoded.PBNode.LookupByString("or"); err == nil {
 		if val, err := v.AsInt(); err == nil {
 			n.Or = int(val) // Assign the 'or' field to ProtoNode
 		}
@@ -82,7 +82,7 @@ func fromImmutableNode(encoded *immutableProtoNode) *ProtoNode {
 		if val, err := v.AsInt(); err == nil {
 			n.chunksize = int(val) // Assign the 'par' field to ProtoNode
 		}
-	}
+	}*/
 
 	// we don't set n.linksDirty because the order of the links list from
 	// serialized form needs to be stable, until we start mutating the ProtoNode
