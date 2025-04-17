@@ -5,8 +5,11 @@ package blockstore
 import (
 	"context"
 	"errors"
+	"fmt"
+	"os"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	dshelp "github.com/ipfs/boxo/datastore/dshelp"
 	blocks "github.com/ipfs/go-block-format"
@@ -207,6 +210,7 @@ func (bs *blockstore) Get(ctx context.Context, k cid.Cid) (blocks.Block, error) 
 }
 
 func (bs *blockstore) Put(ctx context.Context, block blocks.Block) error {
+	st := time.Now()
 	k := dshelp.MultihashToDsKey(block.Cid().Hash())
 
 	// Has is cheaper than Put, so see if we already have it
@@ -216,7 +220,12 @@ func (bs *blockstore) Put(ctx context.Context, block blocks.Block) error {
 			return nil // already stored.
 		}
 	}
-	return bs.datastore.Put(ctx, k, block.RawData())
+	en := time.Now()
+	fmt.Fprintf(os.Stdout, "Time taken to check if cid is datastore : %s \n", en.Sub(st).String())
+	err := bs.datastore.Put(ctx, k, block.RawData())
+	en1 := time.Since(en)
+	fmt.Fprintf(os.Stdout, "Time taken to put the data in the data store is : %s \n", en1.String())
+	return err
 }
 
 func (bs *blockstore) PutMany(ctx context.Context, blocks []blocks.Block) error {
