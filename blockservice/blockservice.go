@@ -7,7 +7,9 @@ import (
 	"context"
 	"io"
 	"sync"
-
+	"os"
+	"fmt"
+	"time"
 	"github.com/ipfs/boxo/blockservice/internal"
 	"github.com/ipfs/boxo/blockstore"
 	"github.com/ipfs/boxo/exchange"
@@ -246,13 +248,15 @@ func (s *blockService) getExchangeFetcher() exchange.Fetcher {
 }
 
 func getBlock(ctx context.Context, c cid.Cid, bs BlockService, fetchFactory func() exchange.Fetcher) (blocks.Block, error) {
+	st := time.Now()
 	err := verifcid.ValidateCid(grabAllowlistFromBlockservice(bs), c) // hash security
 	if err != nil {
 		return nil, err
 	}
-
+	mid1 := time.Now()
+	fmt.Fprintf(os.Stdout, "Validation of Cid took : %s \n", mid1.Sub(st).String())
 	blockstore := bs.Blockstore()
-
+	
 	block, err := blockstore.Get(ctx, c)
 	switch {
 	case err == nil:
@@ -262,7 +266,9 @@ func getBlock(ctx context.Context, c cid.Cid, bs BlockService, fetchFactory func
 	default:
 		return nil, err
 	}
-
+	mid2 := time.Now()
+	fmt.Fprintf(os.Stdout, "Check locality of Cid took : %s \n", mid2.Sub(mid1).String())
+	
 	fetch := fetchFactory() // lazily create session if needed
 	if fetch == nil {
 		logger.Debug("BlockService GetBlock: Not found")
@@ -274,18 +280,25 @@ func getBlock(ctx context.Context, c cid.Cid, bs BlockService, fetchFactory func
 	if err != nil {
 		return nil, err
 	}
+	mid3 := time.Now()
+	fmt.Fprintf(os.Stdout, "Retrieve from network took : %s \n", mid3.Sub(mid2).String())
 	// also write in the blockstore for caching, inform the exchange that the block is available
 	err = blockstore.Put(ctx, blk)
 	if err != nil {
 		return nil, err
 	}
+	mid4 := time.Now()
+	fmt.Fprintf(os.Stdout, "Caching took : %s \n", mid4.Sub(mid3).String())
 	if ex := bs.Exchange(); ex != nil {
 		err = ex.NotifyNewBlocks(ctx, blk)
 		if err != nil {
 			return nil, err
 		}
+		end := time.Now()
+		fmt.Fprintf(os.Stdout, "Exchanging took : %s \n", end.Sub(mid4).String())
 	}
 	logger.Debugf("BlockService.BlockFetched %s", c)
+	
 	return blk, nil
 }
 
