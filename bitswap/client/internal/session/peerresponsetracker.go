@@ -44,6 +44,7 @@ func (prt *peerResponseTracker) choose(peers []peer.ID) peer.ID {
 	for _, p := range peers {
 		counted += float64(prt.getPeerCount(p)) / float64(total)
 		if counted > rnd {
+			fmt.Fprintf(os.Stdout, "PEER SELECTED FOR DOWNLOAD IS : %s\n", p.String())
 			return p
 		}
 	}
