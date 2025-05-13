@@ -36,6 +36,8 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap/zapcore"
+	"os"
+	"fmt"
 )
 
 var log = logging.Logger("bitswap/client")
@@ -447,6 +449,7 @@ func (bs *Client) ReceiveMessage(ctx context.Context, p peer.ID, incoming bsmsg.
 	if len(iblocks) > 0 || len(haves) > 0 || len(dontHaves) > 0 {
 		// Process blocks
 		err := bs.receiveBlocksFrom(ctx, p, iblocks, haves, dontHaves)
+		fmt.Fprintf(os.Stdout, "PEER SELECTED IS : %s \n",p.String())
 		if err != nil {
 			log.Warnf("ReceiveMessage recvBlockFrom error: %s", err)
 			return
