@@ -515,10 +515,11 @@ func grabSessionFromContext(ctx context.Context, bs BlockService) *Session {
 
 	ss, ok := s.(*Session)
 	if !ok {
+		fmt.Fprintf(os.Stdout, "New session required !!! \n")
 		// idk what to do here, that kinda sucks, giveup
 		return nil
 	}
-
+	fmt.Fprintf(os.Stdout, "Old session used !!! \n")
 	return ss
 }
 
