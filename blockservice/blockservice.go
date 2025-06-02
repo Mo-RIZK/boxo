@@ -232,6 +232,7 @@ func (s *blockService) AddBlocks(ctx context.Context, bs []blocks.Block) error {
 // GetBlock retrieves a particular block from the service,
 // Getting it from the datastore using the key (hash).
 func (s *blockService) GetBlock(ctx context.Context, c cid.Cid) (blocks.Block, error) {
+	fmt.Fprintf(os.Stdout, "Initiate session !!! \n")
 	if ses := grabSessionFromContext(ctx, s); ses != nil {
 		return ses.GetBlock(ctx, c)
 	}
