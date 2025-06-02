@@ -447,6 +447,7 @@ type Session struct {
 
 // grabSession is used to lazily create sessions.
 func (s *Session) grabSession() exchange.Fetcher {
+	start := time.Now()
 	s.createSession.Do(func() {
 		defer func() {
 			s.sesctx = nil // early gc
@@ -465,7 +466,10 @@ func (s *Session) grabSession() exchange.Fetcher {
 		s.ses = sesEx.NewSession(s.sesctx)
 	})
 
-	return s.ses
+	sess := s.ses
+	tt := time.Since(start)
+	fmt.Fprintf(os.Stdout, "Grabing session took %s !!! \n",tt.String())
+	return tt
 }
 
 // GetBlock gets a block in the context of a request session
