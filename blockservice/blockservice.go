@@ -469,7 +469,7 @@ func (s *Session) grabSession() exchange.Fetcher {
 	sess := s.ses
 	tt := time.Since(start)
 	fmt.Fprintf(os.Stdout, "Grabing session took %s !!! \n",tt.String())
-	return tt
+	return sess
 }
 
 // GetBlock gets a block in the context of a request session
