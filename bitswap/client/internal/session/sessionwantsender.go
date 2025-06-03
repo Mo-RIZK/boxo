@@ -583,7 +583,7 @@ func (sws *sessionWantSender) sendWants(sends allWants) {
 		}
 		// Inform the session that we've sent the wants
 		sws.onSend(p, wblks, whaves)
-		fmt.Fprintf(os.Stdout, "TO SEND TO PEER : %s \n", p.ID.String())
+		fmt.Fprintf(os.Stdout, "TO SEND TO PEER : %s \n", p.String())
 	}
 }
 
