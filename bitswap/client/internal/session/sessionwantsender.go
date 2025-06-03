@@ -2,7 +2,8 @@ package session
 
 import (
 	"context"
-
+	"fmt"
+	"os"
 	bsbpm "github.com/ipfs/boxo/bitswap/client/internal/blockpresencemanager"
 	cid "github.com/ipfs/go-cid"
 	peer "github.com/libp2p/go-libp2p/core/peer"
@@ -582,6 +583,7 @@ func (sws *sessionWantSender) sendWants(sends allWants) {
 		}
 		// Inform the session that we've sent the wants
 		sws.onSend(p, wblks, whaves)
+		fmt.Fprintf(os.Stdout, "TO SEND TO PEER : %s \n", p.ID.String())
 	}
 }
 
