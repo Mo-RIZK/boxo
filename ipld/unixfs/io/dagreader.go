@@ -689,16 +689,13 @@ func (dr *dagReader) WriteNWI2(w io.Writer) error {
 	var written uint64
 	written = 0
 	nbr := 0
-	for _, n := range dr.Indexes{
-		fmt.Fprintf(os.Stdout, "---------------- index updated is : %d ---------------- \n", n)
-	}
 	for _, n := range dr.nodesToExtr {
 		for _, l := range n.Links() {
+			dr.mu.Lock()
 			if contains(dr.Indexes, nbr%(dr.or+dr.par)) && len(linksparallel) < dr.or {
 				linksparallel = append(linksparallel, l)
 			}
 			if len(linksparallel) == dr.or {
-				dr.mu.Lock()
 				dr.startOfNext++
 				dr.mu.Unlock()
 				//open channel with context
@@ -775,7 +772,6 @@ func (dr *dagReader) WriteNWI2(w io.Writer) error {
 						}
 					}
 				}
-				fmt.Fprintf(os.Stdout, "-------------------------------- \n")
 				linksparallel = make([]*ipld.Link, 0)
 			}
 			nbr++
@@ -785,7 +781,10 @@ func (dr *dagReader) WriteNWI2(w io.Writer) error {
 }
 
 func (dr *dagReader) RetrieveAllSet(next int, s int) {
+	dr.mu.Lock()
+	defer dr.mu.Unlock()
 	set := make([]*ipld.Link, 0)
+	dr.Indexes = make([]int, 0)
 	for _, n := range dr.nodesToExtr {
 		for _, l := range n.Links() {
 			if s == next*(dr.or+dr.par) {
@@ -838,7 +837,7 @@ func (dr *dagReader) RetrieveAllSet(next int, s int) {
 						fmt.Fprintf(os.Stdout, "index %d, %s \n", value.Index, value.t.String())
 						dr.Indexes = append(dr.Indexes, value.Index)
 						dr.times = append(dr.times, value.t)
-						fmt.Fprintf(os.Stdout, "---------------- %d %s ---------------- \n", value.Index, value.t.String())
+						fmt.Fprintf(os.Stdout, "---------------- IN TIMER : this is the new index: %d and this is the time: %s ---------------- \n", value.Index, value.t.String())
 					}
 					dr.mu.Unlock()
 				}
@@ -860,6 +859,7 @@ func (dr *dagReader) startTimer(start int, s int) {
 		case <-ticker.C:
 			// Do the update by retrieving the next set of or + par chunks and update indexes with times
 			// dont forget to mutex lock not to interfere
+			fmt.Fprintf(os.Stdout, "---------------I WILLLL UPDATE THE INDEXES ----------------- \n")
 			dr.RetrieveAllSet(start, s)
 
 		}
