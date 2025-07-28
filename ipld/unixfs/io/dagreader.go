@@ -689,6 +689,9 @@ func (dr *dagReader) WriteNWI2(w io.Writer) error {
 	var written uint64
 	written = 0
 	nbr := 0
+	for _, n := range dr.Indexes{
+		fmt.Fprintf(os.Stdout, "---------------- index updated is : %d ---------------- \n", n)
+	}
 	for _, n := range dr.nodesToExtr {
 		for _, l := range n.Links() {
 			if contains(dr.Indexes, nbr%(dr.or+dr.par)) && len(linksparallel) < dr.or {
@@ -706,6 +709,7 @@ func (dr *dagReader) WriteNWI2(w io.Writer) error {
 				defer cancel() // Ensure context is cancelled when batch is done
 				//start n+k gourotines and start retrieving parallel nodes
 				worker := func(nodepassed linkswithindexes) {
+					fmt.Fprintf(os.Stdout, "---------------- index passed to worker is : %d ---------------- \n", nodepassed.Index)
 					node, _ := nodepassed.Link.GetNode(ctx, dr.serv)
 					dr.mu.Lock()
 					defer dr.mu.Unlock()
@@ -834,6 +838,7 @@ func (dr *dagReader) RetrieveAllSet(next int, s int) {
 						fmt.Fprintf(os.Stdout, "index %d, %s \n", value.Index, value.t.String())
 						dr.Indexes = append(dr.Indexes, value.Index)
 						dr.times = append(dr.times, value.t)
+						fmt.Fprintf(os.Stdout, "---------------- %d %s ---------------- \n", value.Index, value.t.String())
 					}
 					dr.mu.Unlock()
 				}
