@@ -232,6 +232,7 @@ type dagReader struct {
 	times            []time.Duration
 	Indexes          []int
 	startOfNext      int
+	muworker sync.Mutex
 }
 
 // Mode returns the UnixFS file mode or 0 if not set.
@@ -699,7 +700,7 @@ func (dr *dagReader) WriteNWI2(w io.Writer) error {
 				dr.startOfNext++
 				dr.mu.Unlock()
 				//open channel with context
-				doneChan := make(chan nodeswithindexes, dr.or)
+				doneChanR := make(chan nodeswithindexes, dr.or)
 				// Create a new context with cancellation for this batch
 				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 				wrote := 0
@@ -708,8 +709,8 @@ func (dr *dagReader) WriteNWI2(w io.Writer) error {
 				worker := func(nodepassed linkswithindexes) {
 					fmt.Fprintf(os.Stdout, "---------------- index passed to worker is : %d ---------------- \n", nodepassed.Index)
 					node, _ := nodepassed.Link.GetNode(ctx, dr.serv)
-					dr.mu.Lock()
-					defer dr.mu.Unlock()
+					dr.muworker.Lock()
+					defer dr.muworker.Unlock()
 					select {
 					case <-ctx.Done():
 						// Context cancelled, goroutine terminates early
@@ -720,7 +721,7 @@ func (dr *dagReader) WriteNWI2(w io.Writer) error {
 						return
 					default:
 						wrote++
-						doneChan <- nodeswithindexes{Node: node, Index: nodepassed.Index}
+						doneChanR <- nodeswithindexes{Node: node, Index: nodepassed.Index}
 						if wrote == dr.or {
 							cancel()
 						}
@@ -736,10 +737,10 @@ func (dr *dagReader) WriteNWI2(w io.Writer) error {
 				//wait
 				dr.wg.Wait()
 				//take from done channel
-				close(doneChan)
+				close(doneChanR)
 				shards := make([][]byte, dr.or+dr.par)
 				reconstruct := 0
-				for value := range doneChan {
+				for value := range doneChanR {
 					// we will compare the indexes and see if they are from 0 to 2 but here we are trying just to write
 					fmt.Fprintf(os.Stdout, "index %d \n", value.Index)
 					// Place the node's raw data into the correct index in shards
@@ -803,8 +804,8 @@ func (dr *dagReader) RetrieveAllSet(next int, s int) {
 						start := time.Now()
 						node, _ := nodepassed.Link.GetNode(ctx, dr.serv)
 						t := time.Since(start)
-						dr.mu.Lock()
-						defer dr.mu.Unlock()
+						dr.muworker.Lock()
+						defer dr.muworker.Unlock()
 						select {
 						case <-ctx.Done():
 							// Context cancelled, goroutine terminates early
@@ -832,14 +833,12 @@ func (dr *dagReader) RetrieveAllSet(next int, s int) {
 					dr.wg.Wait()
 					//take from done channel
 					close(doneChan)
-					dr.mu.Lock()
 					for value := range doneChan {
 						fmt.Fprintf(os.Stdout, "index %d, %s \n", value.Index, value.t.String())
 						dr.Indexes = append(dr.Indexes, value.Index)
 						dr.times = append(dr.times, value.t)
 						fmt.Fprintf(os.Stdout, "---------------- IN TIMER : this is the new index: %d and this is the time: %s ---------------- \n", value.Index, value.t.String())
 					}
-					dr.mu.Unlock()
 				}
 				break
 			} else {
